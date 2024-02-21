@@ -1,0 +1,8 @@
+torch
+torchvision
+numpy
+matplotlib
+ultralytics  # replace with the version you need
+cv2
+dlib
+pandas
