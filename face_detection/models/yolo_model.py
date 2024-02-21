@@ -1,30 +1,34 @@
-# models/yolo_model.py
 import torch
-from torchvision.models.detection import fasterrcnn_resnet50_fpn
-from torchvision.transforms import functional as F
-from PIL import Image
+from pathlib import Path
+from yolov5.models.experimental import attempt_load
+from yolov5.utils.general import non_max_suppression
+from yolov5.utils.torch_utils import select_device
 
 class YOLOModel:
     def __init__(self, config_path, weights_path):
-        # You can use the provided config_path if your YOLO model requires it
-        # Load your YOLO model weights
-        self.model = fasterrcnn_resnet50_fpn(weights=None)
-        self.model.load_state_dict(torch.load(weights_path))
-        self.model.eval()
+        # Load YOLOv5 model
+        self.device = select_device('')
+        self.model = attempt_load(weights_path, map_location=self.device)
+        self.stride = int(self.model.stride.max())  # Model stride
+        self.names = self.model.module.names if hasattr(self.model, 'module') else self.model.names
 
     def detect(self, image):
-        image_tensor = F.to_tensor(image).unsqueeze(0)
-        with torch.no_grad():
-            prediction = self.model(image_tensor)
+        # Process the image using the YOLOv5 model
+        img = torch.from_numpy(image).to(self.device)
+        img = img.float()  # uint8 to fp16/32
+        img /= 255.0  # 0 - 255 to 0.0 - 1.0
 
-        # Extract necessary information from the prediction
-        # Modify this part based on your model's output structure
-        boxes = prediction[0]['boxes'].numpy()
-        scores = prediction[0]['scores'].numpy()
-        labels = prediction[0]['labels'].numpy()
+        if img.ndimension() == 3:
+            img = img.unsqueeze(0)
 
-        return boxes, scores, labels
+        # Inference
+        pred = self.model(img, augment=False)[0]
 
-    def autoshape(self):
+        # Apply NMS
+        pred = non_max_suppression(pred, conf_thres=0.5, iou_thres=0.5)[0]
+
+        return pred
+
+    def autoshape(self, image_size):
         # Implement autoshape logic if needed
         pass

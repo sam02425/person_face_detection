@@ -5,9 +5,11 @@ import pandas as pd
 from datetime import datetime
 from torchvision.transforms import functional as F
 from models.yolo_model import YOLOModel
+import sys
+print(sys.path)
 
 # Define the paths to the YOLO configuration file and weights
-yolo_config = "./yolov5s.yaml"
+yolo_config = "models\yolov5\models\yolov5s.yaml"
 yolo_weights = "./yolov5s.pt"
 
 # Load the YOLO model
